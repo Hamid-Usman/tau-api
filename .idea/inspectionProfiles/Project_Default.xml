@@ -1,0 +1,34 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="LossyEncoding" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="19">
+            <item index="0" class="java.lang.String" itemvalue="PyJWT" />
+            <item index="1" class="java.lang.String" itemvalue="cffi" />
+            <item index="2" class="java.lang.String" itemvalue="tzdata" />
+            <item index="3" class="java.lang.String" itemvalue="cryptography" />
+            <item index="4" class="java.lang.String" itemvalue="defusedxml" />
+            <item index="5" class="java.lang.String" itemvalue="pycparser" />
+            <item index="6" class="java.lang.String" itemvalue="requests" />
+            <item index="7" class="java.lang.String" itemvalue="social-auth-core" />
+            <item index="8" class="java.lang.String" itemvalue="sqlparse" />
+            <item index="9" class="java.lang.String" itemvalue="requests-oauthlib" />
+            <item index="10" class="java.lang.String" itemvalue="djangorestframework-simplejwt" />
+            <item index="11" class="java.lang.String" itemvalue="social-auth-app-django" />
+            <item index="12" class="java.lang.String" itemvalue="Django" />
+            <item index="13" class="java.lang.String" itemvalue="certifi" />
+            <item index="14" class="java.lang.String" itemvalue="charset-normalizer" />
+            <item index="15" class="java.lang.String" itemvalue="djoser" />
+            <item index="16" class="java.lang.String" itemvalue="urllib3" />
+            <item index="17" class="java.lang.String" itemvalue="djangorestframework" />
+            <item index="18" class="java.lang.String" itemvalue="idna" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="ReassignedToPlainText" enabled="false" level="WARNING" enabled_by_default="false" />
+  </profile>
+</component>
