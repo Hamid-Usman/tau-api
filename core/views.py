@@ -66,61 +66,60 @@ class CartViewSet(ModelViewSet):
             }
 
         return Response(vendor_cart_data)
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from decimal import Decimal
+from .models import Order, OrderItem, CartItem, Vendor
+from .serializers import OrderSerializer
+
 class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
-        
+        vendor_id = request.data.get('vendor')
+
+        if not vendor_id:
+            return Response({"error": "Vendor ID is required"}, status=400)
+
         if not request.user.is_authenticated:
             return Response({"error": "Authentication required"}, status=401)
 
         customer = request.user.customer
 
-        # Get the list of CartItem IDs from the request payload
-        cart_item_ids = request.data.get('cart_item_ids', [])
-        if not cart_item_ids:
-            return Response({"error": "No cart items selected"}, status=400)
-
-        # Filter the selected CartItems for the logged-in customer
-        cart_items = CartItem.objects.filter(customer=customer, id__in=cart_item_ids)
+        # Get all cart items for this vendor and customer
+        cart_items = CartItem.objects.filter(
+            customer=customer,
+            food_item__vendor__id=vendor_id
+        )
 
         if not cart_items.exists():
-            return Response({"error": "No valid cart items found"}, status=400)
+            return Response({"error": "No cart items found for this vendor"}, status=400)
 
-        # Group cart items by vendor
-        orders = []
-        cart_items_by_vendor = {}
+        total = Decimal('0.00')
+        vendor = cart_items.first().food_item.vendor
+
+        # Create the order
+        order = Order.objects.create(customer=customer, vendor=vendor)
+
+        # Create OrderItems and calculate total
         for cart_item in cart_items:
-            vendor = cart_item.food_item.vendor
-            if vendor not in cart_items_by_vendor:
-                cart_items_by_vendor[vendor] = []
-            cart_items_by_vendor[vendor].append(cart_item)
+            OrderItem.objects.create(
+                order=order,
+                food_item=cart_item.food_item,
+                quantity=cart_item.quantity,
+                price=cart_item.food_item.price,
+            )
+            total += cart_item.quantity * cart_item.food_item.price
 
-        # Create an order for each vendor
-        for vendor, items in cart_items_by_vendor.items():
-            total = Decimal('0.00')
-            order = Order.objects.create(customer=customer, vendor=vendor)
-            for cart_item in items:
-                OrderItem.objects.create(
-                    order=order,
-                    food_item=cart_item.food_item,
-                    quantity=cart_item.quantity,
-                    price=cart_item.food_item.price,
-                )
-                total += cart_item.quantity * cart_item.food_item.price
-            order.total = total
-            order.save()
-            orders.append(order)
+        order.total = total
+        order.save()
 
-        # Remove the selected cart items after creating the orders
+        # Remove cart items after placing order
         cart_items.delete()
 
-        # Serialize the created orders
-        serializer = self.get_serializer(orders, many=True)
+        serializer = self.get_serializer(order)
         return Response(serializer.data, status=201)
-    
-    
 class OrderItemViewSet(ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
