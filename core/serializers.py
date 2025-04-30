@@ -17,15 +17,21 @@ class CartSerializer(serializers.ModelSerializer):
     def get_total(self, obj):
         # Calculate total price for the cart item
         return obj.quantity * obj.food_item.price
-class OrderSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = Order
-            fields = ["id", "customer", "vendor", "order_date", "status", "total"]
+    
+class OrderCreateSerializer(serializers.Serializer):
+    cart_item_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=False
+    )
+    
+class OrderSerializer(serializers.Serializer):
+    class Meta:
+        model = Order
+        fields = ["id", "customer", "vendor", "order_date", "status", "total"]
 
 class OrderItemSerializer(serializers.ModelSerializer):
     food_item = FoodItemSerializer(read_only=True)
-
     class Meta:
         model = OrderItem
         fields = ["id", "order", "food_item", "quantity", "price"]
-        read_only_field = ["id", "order", "price"]
+        read_only_fields = ["id", "order", "price"]
