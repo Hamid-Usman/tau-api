@@ -6,7 +6,3 @@ from .models import Customer, Vendor, User
 class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-
-class VendorViewSet(ModelViewSet):
-    queryset = Vendor.objects.all()
-    serializer_class = VendorSerializer

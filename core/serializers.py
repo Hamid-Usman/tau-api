@@ -1,7 +1,14 @@
 from rest_framework import serializers
-from .models import FoodItem, CartItem, Order, OrderItem
+from .models import FoodItem, CartItem, Order, OrderItem, Tag
+
 
 class FoodItemSerializer(serializers.ModelSerializer):
+    
+    tags = serializers.SlugRelatedField(
+        many=True,
+        slug_field='tag',
+        queryset=Tag.objects.all()  # Needed for write support
+    )
     class Meta:
         model = FoodItem
         fields = "__all__"
@@ -24,14 +31,17 @@ class OrderCreateSerializer(serializers.Serializer):
         allow_empty=False
     )
     
-class OrderSerializer(serializers.Serializer):
-    class Meta:
-        model = Order
-        fields = ["id", "customer", "vendor", "order_date", "status", "total"]
-
 class OrderItemSerializer(serializers.ModelSerializer):
     food_item = FoodItemSerializer(read_only=True)
+
     class Meta:
         model = OrderItem
-        fields = ["id", "order", "food_item", "quantity", "price"]
-        read_only_fields = ["id", "order", "price"]
+        fields = ['food_item', 'quantity', 'price']
+        
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'customer', 'order_date', 'status', 'total', 'items']
+        read_only_fields = ['id', 'order_date', 'status', 'total', 'items']
