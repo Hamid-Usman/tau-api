@@ -49,12 +49,7 @@ INSTALLED_APPS = [
 
 
 AUTH_USER_MODEL = 'user.User'
-
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',  # Frontend development URL
-    'https://yourfrontenddomain.com',  # Production frontend URL
-]
 
 AUTH_USER_MODEL = 'user.User'
 
