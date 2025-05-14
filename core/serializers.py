@@ -14,17 +14,30 @@ class FoodItemSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class CartSerializer(serializers.ModelSerializer):
-    total = serializers.SerializerMethodField()  # Add a custom field for total price
+    total = serializers.SerializerMethodField()
+    food_item = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
         fields = ["id", "food_item", "customer", "quantity", "added_at", "total"]
-        read_only_field = ["added_at"]
-    
+        read_only_fields = ["added_at"]
+
+    def get_food_item(self, obj):
+        request = self.context.get("request")
+        image_url = (
+            request.build_absolute_uri(obj.food_item.image.url)
+            if request and obj.food_item and obj.food_item.image
+            else None
+        )
+        return {
+            "id": obj.food_item.id,
+            "name": obj.food_item.name,
+            "price": float(obj.food_item.price),
+            "image": image_url
+        }
+
     def get_total(self, obj):
-        # Calculate total price for the cart item
-        return obj.quantity * obj.food_item.price
-    
+        return float(obj.quantity * obj.food_item.price)
 class OrderCreateSerializer(serializers.Serializer):
     cart_item_ids = serializers.ListField(
         child=serializers.IntegerField(),

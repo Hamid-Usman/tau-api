@@ -55,6 +55,9 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',  # Frontend development URL
     'https://yourfrontenddomain.com',  # Production frontend URL
 ]
+
+AUTH_USER_MODEL = 'user.User'
+
 CORS_ALLOW_METHODS = [
     'GET',
     'POST',

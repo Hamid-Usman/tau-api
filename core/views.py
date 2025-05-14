@@ -15,13 +15,32 @@ class FoodViewSet(ModelViewSet):
 class CartViewSet(ModelViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartSerializer
-    
+
+    def create(self, request, *args, **kwargs):
+        data = request.data # gets input data from the frontend
+        try:
+            food_item = FoodItem.objects.get(id=data.get('food_item')) # gets the id of the selected food item
+        except FoodItem.DoesNotExist:
+            return Response({'error': 'Food item not found.'}, status=404)
+        #You can handle any additional logic here
+        cart_item = CartItem.objects.create(
+            customer=request.user,
+            food_item=food_item, 
+            quantity=data.get('quantity', 1)  # Default to 1 if not provided
+        )
+        return Response(CartSerializer(cart_item).data, status=201)
+
+    def list(self, request, *args, **kwargs):
+        customer = request.user
+        cart_items = CartItem.objects.filter(customer=customer)
+        serializer = CartSerializer(cart_items, many=True, context={'request': request})
+        return Response(serializer.data)
 class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
-        customer = request.user.customer
+        customer = request.user
 
         cart_items = CartItem.objects.filter(
             customer=customer
@@ -59,7 +78,7 @@ class OrderViewSet(ModelViewSet):
         """
         Override the default `list()` method to include food item details in the response.
         """
-        customer = request.user.customer
+        customer = 2
         orders = Order.objects.filter(customer=customer).prefetch_related('items__food_item')
 
         data = []
