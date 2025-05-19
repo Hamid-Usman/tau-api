@@ -4,6 +4,7 @@ from .models import FoodItem, CartItem, Order, OrderItem, Tag
 
 class FoodItemSerializer(serializers.ModelSerializer):
     
+    
     tags = serializers.SlugRelatedField(
         many=True,
         slug_field='tag',

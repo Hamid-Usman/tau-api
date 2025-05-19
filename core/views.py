@@ -6,11 +6,17 @@ from rest_framework.response import Response
 from collections import defaultdict
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import MenuFilter
 # Create your views here.
 
 class FoodViewSet(ModelViewSet):
     queryset = FoodItem.objects.all()
     serializer_class = FoodItemSerializer
+    
+    filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
+    filterset_class = MenuFilter
 
 class CartViewSet(ModelViewSet):
     queryset = CartItem.objects.all()
