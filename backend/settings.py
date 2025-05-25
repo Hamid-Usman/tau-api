@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['tau-api.onrender.com', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,7 +49,11 @@ INSTALLED_APPS = [
     'user'
 ]
 
-
+JAZZMIN_SETTINGS = {
+    "site_title": "KKK",
+    "site_header": "OP",
+    "copyright": "Ahmad Sardauna Maiyaki"
+}
 AUTH_USER_MODEL = 'user.User'
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -112,8 +117,8 @@ REST_FRAMEWORK = {
 DJOSER = {
     'SERIALIZERS': {
         'user_create': 'users.serializers.UserCreateSerializer',
-        'user': 'djoser.serializers.UserSerializer',
-        'current_user': 'djoser.serializers.UserSerializer',
+        'user': 'user.serializers.UserSerializer',
+        'current_user': 'user.serializers.UserSerializer',
     },
     'USER_CREATE_PASSWORD_RETYPE': True,
     'USERNAME_FIELD': 'email',
