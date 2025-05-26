@@ -27,7 +27,8 @@ class RatingViewSet(ModelViewSet):
     serializer_class = RatingSerializer
     
     # def perform_create(self, serializer):
-
+    def perform_create(self, serializer):
+        serializer.save (customer=self.request.user)
 
 class CartViewSet(ModelViewSet):
     queryset = CartItem.objects.all()

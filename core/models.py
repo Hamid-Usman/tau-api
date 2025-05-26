@@ -78,16 +78,12 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.food_item.name} for Order {self.order.id}"
 
-
 class Rating(models.Model):
-    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name='ratings')
+    order_item = models.ForeignKey(FoodItem, on_delete=models.CASCADE, related_name='ratings')
     rating = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(1, 6)])  # Rating from 1 to 5
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     comment = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ('order_item', 'customer')
-
     def food_items(self):
-        return self.order_item.food_item
+        return self.order_item.name

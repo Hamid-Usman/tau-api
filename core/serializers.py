@@ -4,11 +4,13 @@ from .models import FoodItem, Rating, CartItem, Order, OrderItem, Tag
 from django.db.models import Avg
 
 class RatingSerializer(serializers.ModelSerializer):
-    food_item_name = serializers.CharField(source="order_item.food_item.name", read_only=True)
+    food_item_name = serializers.CharField(source="order_item.name", read_only=True)
+    
     class Meta:
         model = Rating
         fields = ["id", "order_item", "food_item_name", "rating", "customer",
-                    "comment", "created_at"]
+                "comment", "created_at"]
+        read_only_fields = [ "customer" ]
 
 class FoodItemSerializer(serializers.ModelSerializer):
     
@@ -25,11 +27,11 @@ class FoodItemSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "image", "price", "tags", "average_rating", "rating_count"]
     
     def get_average_rating(self, obj):
-        average = Rating.objects.filter(order_item__food_item=obj).aggregate(avg_rating=Avg('rating'))['avg_rating']
+        average = Rating.objects.filter(order_item=obj).aggregate(avg_rating=Avg('rating'))['avg_rating']
         return round(average, 1) if average is not None else 0
     
     def get_rating_count(self, obj):
-        ratings = Rating.objects.filter(order_item__food_item=obj).count()
+        ratings = Rating.objects.filter(order_item=obj).count()
         return ratings
 
 class CartSerializer(serializers.ModelSerializer):
