@@ -24,7 +24,7 @@ class Tag(models.Model):
     tag = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
-        return self.tag
+        return f'{self.tag}- {self.id}'
 
 class FoodItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -51,11 +51,11 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('processing', 'Processing'),
+        ('Pending', 'Pending'),
+        ('Processing', 'Processing'),
         ('out_for_delivery', 'Out for Delivery'),
-        ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled'),
+        ('Delivered', 'Delivered'),
+        ('Completed', 'Completed'),
     )
 
     customer = models.ForeignKey(User, on_delete=models.CASCADE)

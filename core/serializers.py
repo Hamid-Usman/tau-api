@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import FoodItem, Rating, CartItem, Order, OrderItem, Tag
+from .models import Tag, FoodItem, Rating, CartItem, Order, OrderItem, Tag
 
 from django.db.models import Avg
 
@@ -12,6 +12,11 @@ class RatingSerializer(serializers.ModelSerializer):
                 "comment", "created_at"]
         read_only_fields = [ "customer" ]
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = "__all__"
+        
 class FoodItemSerializer(serializers.ModelSerializer):
     
     tags = serializers.SlugRelatedField(
@@ -70,7 +75,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['food_item', 'quantity', 'price']
+        fields = ['id', 'food_item', 'quantity', 'price']
         
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)

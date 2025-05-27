@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 routers = DefaultRouter()
 
+routers.register(r'tags', views.TagViewSet, basename="tags")
 routers.register(r'food', views.FoodViewSet, basename="food")
 routers.register(r'cart', views.CartViewSet, basename="cart")
 routers.register(r'rating', views.RatingViewSet, basename="rating")

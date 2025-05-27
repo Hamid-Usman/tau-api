@@ -1,6 +1,6 @@
 # from django.shortcuts import render
-from .models import FoodItem, Rating, CartItem, Order, OrderItem
-from .serializers import FoodItemSerializer, RatingSerializer, CartSerializer, OrderSerializer, OrderCreateSerializer, OrderStatusSerializer
+from .models import Tag, FoodItem, Rating, CartItem, Order, OrderItem
+from .serializers import TagSerializer, FoodItemSerializer, RatingSerializer, CartSerializer, OrderSerializer, OrderCreateSerializer, OrderStatusSerializer
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from collections import defaultdict
@@ -21,6 +21,11 @@ class FoodViewSet(ModelViewSet):
     
     filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
     filterset_class = MenuFilter
+
+class TagViewSet(ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
 
 class RatingViewSet(ModelViewSet):
     queryset = Rating.objects.all()
