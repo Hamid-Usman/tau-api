@@ -116,7 +116,7 @@ class OrderViewSet(ModelViewSet):
                 email=customer.email,
                 amount=int(total * 100),  # Paystack uses amount in kobo
                 reference=reference,
-                callback_url="https://tau-bite.vercel.app/home/order",
+                callback_url="http://localhost:3000/home/order",
                 metadata={
                     'order_id': str(order.id),
                     'customer_id': str(customer.id),
