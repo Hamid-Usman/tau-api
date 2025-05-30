@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-1crqfv4t96pl9$2y_^bdx0j_vlf&26t*$8nn6wr(ih=g$!ez3h
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://tau-api.onrender.com', '127.0.0.1', 'https://tau-bite.vercel.app']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -57,15 +57,6 @@ JAZZMIN_SETTINGS = {
 AUTH_USER_MODEL = 'user.User'
 CORS_ALLOW_ALL_ORIGINS = True
 
-
-CORS_ALLOW_METHODS = [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS',
-]
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
