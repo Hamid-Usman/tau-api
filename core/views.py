@@ -55,7 +55,7 @@ class CartViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         customer = request.user
-        cart_items = CartItem.objects.filter(customer=customer).select_related('food_item')
+        cart_items = CartItem.objects.filter(customer=customer).select_related('food_item') # It tells Django to perform a SQL join and fetch the related FoodItem objects for each cart item in the same database query
         serializer = CartSerializer(cart_items, many=True, context={'request': request})
         return Response(serializer.data)
     
@@ -229,32 +229,7 @@ class OrderViewSet(ModelViewSet):
             print("User not authenticated") 
             return Response({"error": "Authentication required"}, status=401)
             
-        # Filter orders by current user and prefetch related data
-        orders = Order.objects.filter(customer=customer).prefetch_related('items__food_item')
 
-        data = []
-        for order in orders:
-            food_items = []
-            total_sum = 0
-            for item in order.items.all():
-                item_total = float(item.price * item.quantity)
-                total_sum += item_total
-                food_items.append({
-                    "id": item.food_item.id,
-                    "name": item.food_item.name,
-                    "price": float(item.food_item.price),
-                    "quantity": item.quantity,
-                    "price_at_order": item_total,
-                })
-
-            data.append({
-                "order_id": order.id,  # Consistent field naming
-                "status": order.status,
-                "food_items": food_items,
-                "total_sum": total_sum,
-            })
-        return Response(data)
-    
     # This action is for authenticated users to view their own orders
     @action(detail=False, methods=['get'], url_path="user-orders")
     def user_order(self, request, *args, **kwargs):
