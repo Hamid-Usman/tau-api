@@ -55,10 +55,18 @@ class CartViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         customer = request.user
-        cart_items = CartItem.objects.filter(customer=customer)
+        cart_items = CartItem.objects.filter(customer=customer).select_related('food_item')
         serializer = CartSerializer(cart_items, many=True, context={'request': request})
         return Response(serializer.data)
-
+    
+    @action(detail=True, methods=['delete'])
+    def delete_cart_item(self, request, pk=None):
+        try:
+            cart_item = CartItem.objects.get(id=pk, customer=request.user)
+            cart_item.delete()
+            return Response({"message": "Cart item deleted successfully"}, status=204)
+        except CartItem.DoesNotExist:
+            return Response({"error": "Cart item not found"}, status=404)
 
 class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
@@ -116,7 +124,7 @@ class OrderViewSet(ModelViewSet):
                 email=customer.email,
                 amount=int(total * 100),  # Paystack uses amount in kobo
                 reference=reference,
-                callback_url="https://tau-bite.vercel.app/home/order",
+                callback_url="https://localhost:3000/home/order",
                 metadata={
                     'order_id': str(order.id),
                     'customer_id': str(customer.id),
@@ -274,6 +282,7 @@ class OrderViewSet(ModelViewSet):
             data.append({
                 "id": order.id,
                 "status": order.status,
+                "order_date": order.order_date,
                 "payment_reference": order.payment_reference,
                 "food_items": food_items,
                 "total_sum": total_sum,

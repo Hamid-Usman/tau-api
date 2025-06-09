@@ -53,7 +53,7 @@ class Order(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending'),
         ('Processing', 'Processing'),
-        ('out_for_delivery', 'Out for Delivery'),
+        ('Delivering', 'Delivering'),
         ('Delivered', 'Delivered'),
         ('Completed', 'Completed'),
     )
