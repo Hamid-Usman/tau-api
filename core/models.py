@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
+import ollama
 
 User = get_user_model()
 
@@ -33,8 +34,7 @@ class FoodItem(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
     available = models.BooleanField(default=True)
     image = models.ImageField(upload_to='food_images/', null=True, blank=True)
-    
-    tags = models.ManyToManyField(Tag, related_name='food_items', blank=True)
+    tags = models.ManyToManyField(Tag, related_name='food_items', blank=True)  # Track if description was auto-generated
 
     def __str__(self):
         return self.name
@@ -59,14 +59,15 @@ class Order(models.Model):
     )
 
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_date = models.DateTimeField(auto_now_add=True)
+    order_date = models.DateField(auto_now_add=True)
+    order_time = models.TimeField(auto_now=True)
     payment_reference = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     delivery_location = models.CharField(max_length=255, blank=False, default='Not specified')
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Order #{self.id} - {self.customer.email}"
+        return f"Order #{self.order_time} - {self.customer.email}"
 
 class OrderItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -75,15 +76,17 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def __str__(self):
-        return f"{self.quantity} x {self.food_item.name} for Order {self.order.id}"
 
 class Rating(models.Model):
-    order_item = models.ForeignKey(FoodItem, on_delete=models.CASCADE, related_name='ratings')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='ratings')
+    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name='ratings')
     rating = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(1, 6)])  # Rating from 1 to 5
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     comment = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('order_item', 'customer')
     def food_items(self):
         return self.order_item.name
+    

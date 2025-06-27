@@ -4,13 +4,19 @@ from .models import Tag, FoodItem, Rating, CartItem, Order, OrderItem, Tag
 from django.db.models import Avg
 
 class RatingSerializer(serializers.ModelSerializer):
-    food_item_name = serializers.CharField(source="order_item.name", read_only=True)
+    food_item_name = serializers.CharField(source="order_item_id.food_item.name", read_only=True)
     
     class Meta:
         model = Rating
-        fields = ["id", "order_item", "food_item_name", "rating", "customer",
+        fields = ["id", "order", "order_item", "food_item_name", "rating", "customer",
                 "comment", "created_at"]
         read_only_fields = [ "customer" ]
+    def validate(self, data):
+        order = data.get('order')
+        order_item = data.get('order_item')
+        if order_item and order and order_item.order != order:
+            raise serializers.ValidationError("OrderItem does not belong to the specified Order.")
+        return data
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,14 +35,14 @@ class FoodItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FoodItem
-        fields = ["id", "name", "image", "price", "tags", "average_rating", "rating_count"]
-    
+        fields = ["id", "name", "image", "price", "description", "tags", "average_rating", "rating_count"]
+        
     def get_average_rating(self, obj):
-        average = Rating.objects.filter(order_item=obj).aggregate(avg_rating=Avg('rating'))['avg_rating']
+        average = Rating.objects.filter(order_item__food_item=obj).aggregate(avg_rating=Avg('rating'))['avg_rating']
         return round(average, 1) if average is not None else 0
     
     def get_rating_count(self, obj):
-        ratings = Rating.objects.filter(order_item=obj).count()
+        ratings = Rating.objects.filter(order_item__food_item=obj).count()
         return ratings
 
 class CartSerializer(serializers.ModelSerializer):
@@ -71,19 +77,27 @@ class OrderCreateSerializer(serializers.Serializer):
     )
     
 class OrderItemSerializer(serializers.ModelSerializer):
-    food_item = FoodItemSerializer(read_only=True)
+    food_item_name = serializers.CharField(source='food_item.name', read_only=True)
+    food_item_id = serializers.PrimaryKeyRelatedField(source='food_item', read_only=True)
+    is_rated = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'food_item', 'quantity', 'price']
+        fields = ['id', 'food_item_id', 'food_item_name', 'quantity', 'price', 'is_rated']
+
+    def get_is_rated(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.ratings.filter(customer=request.user).exists()
+        return False
         
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'order_date', 'status', 'total', 'delivery_location', 'items']
-        read_only_fields = ['id', 'order_date', 'status', 'total', 'items']
+        fields = ['id', 'customer', 'order_date', 'order_time', 'status', 'total', 'delivery_location', 'items']
+        read_only_fields = ['id', 'order_date', 'order_time', 'status', 'total', 'items']
 
 class OrderStatusSerializer(serializers.ModelSerializer):
     class Meta:

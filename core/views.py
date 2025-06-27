@@ -10,7 +10,8 @@ from paystackapi.transaction import Transaction
 # from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .filters import MenuFilter
+from .filters import MenuFilter, RatingFilter
+from rest_framework.exceptions import ValidationError
 
 import uuid
 # Create your views here.
@@ -21,6 +22,15 @@ class FoodViewSet(ModelViewSet):
     
     filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
     filterset_class = MenuFilter
+    
+    # @action(detail=True, methods=['post'])
+    # def generate_description(self, request, pk=None):
+    #     """Endpoint to manually regenerate description"""
+    #     food_item = self.get_object()
+    #     food_item.description = food_item.generate_description()
+    #     food_item.description_generated = True
+    #     food_item.save()
+    #     return Response({'description': food_item.description}, status=status.HTTP_200_OK)
 
 class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
@@ -29,10 +39,22 @@ class TagViewSet(ModelViewSet):
 class RatingViewSet(ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
-    
+    filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
+    filter_class = RatingFilter    
     # def perform_create(self, serializer):
     def perform_create(self, serializer):
-        serializer.save (customer=self.request.user)
+
+        customer = self.request.user
+        # order_item = serializer.validated_data.get("order_item")
+        # order = serializer.validated_data.get("order")
+
+        # if order_item.order != order:
+        #     raise ValidationError("OrderItem does not belong to the specified Order.")
+
+        # if Rating.objects.filter(order_item=order_item, customer=customer).exists():
+        #     raise ValidationError("You have already rated this item.")
+
+        serializer.save(customer=customer)
 
 class CartViewSet(ModelViewSet):
     queryset = CartItem.objects.all()
@@ -103,7 +125,7 @@ class OrderViewSet(ModelViewSet):
         order = Order.objects.create(
             customer=customer,
             total=total,
-            status='pending',
+            status='Pending',
             delivery_location=delivery_location
         )
 
@@ -123,7 +145,7 @@ class OrderViewSet(ModelViewSet):
                 email=customer.email,
                 amount=int(total * 100),  # Paystack uses amount in kobo
                 reference=reference,
-                callback_url="https://tau-bite.vercel.app/home/order",
+                callback_url="http://tau-bite.vercel.app/home/order",
                 metadata={
                     'order_id': str(order.id),
                     'customer_id': str(customer.id),
@@ -162,7 +184,8 @@ class OrderViewSet(ModelViewSet):
                 item_total = float(item.price * item.quantity)
                 total_sum += item_total
                 food_items.append({
-                    "id": item.food_item.id,
+                    "order_id": item.id,
+                    "food_id": item.food_item.id,
                     "name": item.food_item.name,
                     "price": float(item.food_item.price),
                     "quantity": item.quantity,
@@ -246,7 +269,8 @@ class OrderViewSet(ModelViewSet):
                 item_total = float(item.price * item.quantity)
                 total_sum += item_total
                 food_items.append({
-                    "id": item.food_item.id,
+                    "order_item_id": item.id,
+                    "food_item_id": item.food_item.id,
                     "name": item.food_item.name,
                     "price": float(item.food_item.price),
                     "quantity": item.quantity,
@@ -257,6 +281,7 @@ class OrderViewSet(ModelViewSet):
                 "id": order.id,
                 "status": order.status,
                 "order_date": order.order_date,
+                "order_time": order.order_time,
                 "payment_reference": order.payment_reference,
                 "food_items": food_items,
                 "total_sum": total_sum,
