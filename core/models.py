@@ -2,7 +2,6 @@ from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
-import ollama
 
 User = get_user_model()
 
