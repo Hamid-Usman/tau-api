@@ -34,6 +34,7 @@ class FoodItem(models.Model):
     available = models.BooleanField(default=True)
     image = models.ImageField(upload_to='food_images/', null=True, blank=True)
     tags = models.ManyToManyField(Tag, related_name='food_items', blank=True)  # Track if description was auto-generated
+    description_generated = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -88,4 +89,10 @@ class Rating(models.Model):
         unique_together = ('order_item', 'customer')
     def food_items(self):
         return self.order_item.name
+
+class ReviewAgent(models.Model):
+    analysis = models.CharField(max_length=5000, blank=False)
+    date_created = models.DateField(auto_now_add=True)
     
+    def __str__(self):
+        return f'AI Review on {self.date_created}'

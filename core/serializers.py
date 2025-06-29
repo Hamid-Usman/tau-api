@@ -17,6 +17,7 @@ class RatingSerializer(serializers.ModelSerializer):
         if order_item and order and order_item.order != order:
             raise serializers.ValidationError("OrderItem does not belong to the specified Order.")
         return data
+    
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +36,7 @@ class FoodItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FoodItem
-        fields = ["id", "name", "image", "price", "description", "tags", "average_rating", "rating_count"]
+        fields = ["id", "name", "image", "price", "description", "tags", "average_rating", "rating_count", "description_generated"]
         
     def get_average_rating(self, obj):
         average = Rating.objects.filter(order_item__food_item=obj).aggregate(avg_rating=Avg('rating'))['avg_rating']

@@ -1,5 +1,5 @@
 # from django.shortcuts import render
-from .models import Tag, FoodItem, Rating, CartItem, Order, OrderItem
+from .models import Tag, FoodItem, Rating, ReviewAgent, CartItem, Order, OrderItem
 from .serializers import TagSerializer, FoodItemSerializer, RatingSerializer, CartSerializer, OrderSerializer, OrderCreateSerializer, OrderStatusSerializer
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
@@ -7,15 +7,20 @@ from collections import defaultdict
 from decimal import Decimal
 from rest_framework.decorators import action
 from paystackapi.transaction import Transaction
+from rest_framework import status
 # from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import MenuFilter, RatingFilter
 from rest_framework.exceptions import ValidationError
 
-import uuid
-# Create your views here.
+from langchain_ollama import OllamaLLM as Ollama
+from langchain.prompts import ChatPromptTemplate
+import threading
 
+import uuid
+
+# Create your views here.
 class FoodViewSet(ModelViewSet):
     queryset = FoodItem.objects.all()
     serializer_class = FoodItemSerializer
@@ -23,14 +28,58 @@ class FoodViewSet(ModelViewSet):
     filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
     filterset_class = MenuFilter
     
-    # @action(detail=True, methods=['post'])
-    # def generate_description(self, request, pk=None):
-    #     """Endpoint to manually regenerate description"""
-    #     food_item = self.get_object()
-    #     food_item.description = food_item.generate_description()
-    #     food_item.description_generated = True
-    #     food_item.save()
-    #     return Response({'description': food_item.description}, status=status.HTTP_200_OK)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        if not serializer.validated_data.get("description"):
+            food_item = serializer.save(description="", description_generated=False)
+            
+            threading.Thread(
+                target=self.generate_and_update_description,
+                args=(food_item.id,)
+            ).start()
+            return Response({
+                "Status": f"Generating description for {food_item.name} ",
+            })
+            
+    def generate_and_update_description(self, food_item_id):
+        print("processing")
+        try:
+            food_item =FoodItem.objects.get(id=food_item_id)
+        
+            llm = Ollama(model="mistral", temperature=0.7)
+            prompt_template = """
+                You are a professional food critic and menu description writer. 
+                Create an appealing 2-3 sentence description for this menu item and inspect the images for better analysis:
+                
+                food: {name}
+                tags: {tags}
+            """
+            
+            context = {
+                "name": food_item.name,
+                "image": food_item.image,
+                "tags": " ,".join([tag.tag for tag in food_item.tags.all()]) if food_item.tags.exists() else ""
+            }
+            
+            prompt = ChatPromptTemplate.from_template(prompt_template)
+            chain = prompt | llm
+            description = chain.invoke(context)
+            
+            food_item.description = description
+            food_item.description_generated = True
+            food_item.save()
+            print("Done!")
+        except Exception as e:
+            print("Didn't work" )
+        
+    
+        
+        
+        
+        
+        
 
 class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
@@ -40,7 +89,8 @@ class RatingViewSet(ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
     filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
-    filter_class = RatingFilter    
+    filter_class = RatingFilter
+    
     # def perform_create(self, serializer):
     def perform_create(self, serializer):
 
@@ -55,7 +105,52 @@ class RatingViewSet(ModelViewSet):
         #     raise ValidationError("You have already rated this item.")
 
         serializer.save(customer=customer)
-
+    
+    @action(detail=False, methods=['get'])
+    def ai_analysis(self, request):
+        reviews = Rating.objects.all()
+        if not reviews.exists():
+            return Response("detail: No reviews")
+        
+        review_data = list(reviews.values("rating", "comment"))
+        
+        threading.Thread(
+            target=self.generate_review_summary,
+            args= (review_data,)
+        ).start()
+        return Response(
+            {"status": "Working on review analysis"}
+        )
+    
+    def generate_review_summary(self, reviews_data):
+        try: 
+            print("Analysing reviews...")
+            
+            llm = Ollama(model="mistral", temperature=0.7)
+            
+            prompt_template ="""
+                    Provide analysis for this reviews data inspect:
+                    {formatted_data}
+            """
+            formatted_data = {
+                "/n".join(
+                    f"Rating: {r["rating"]}/5 -- Comment: {r["comment"]}"
+                    for r in reviews_data
+                )
+            }
+            print("working")
+            prompt = ChatPromptTemplate.from_template(prompt_template)
+            chain = prompt | llm
+            analysis = chain.invoke({"formatted_data": formatted_data})
+            print("worked")
+            
+            ReviewAgent.objects.create(analysis=analysis)
+            print("AI generated review saved")
+            
+        
+        except Exception as e:
+            print("failed")
+        
 class CartViewSet(ModelViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartSerializer
@@ -287,3 +382,5 @@ class OrderViewSet(ModelViewSet):
                 "total_sum": total_sum,
             })
         return Response(data)
+    
+    
