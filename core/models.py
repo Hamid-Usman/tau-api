@@ -75,6 +75,7 @@ class OrderItem(models.Model):
     food_item = models.ForeignKey(FoodItem, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class Rating(models.Model):

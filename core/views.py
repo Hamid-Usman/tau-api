@@ -13,10 +13,12 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import MenuFilter, RatingFilter
 from rest_framework.exceptions import ValidationError
-
+from ..services.prompts.ai_recommendation import handle_ai_recommendation
+from ..services.prompts.food_description import handle_description_generation
 from langchain_ollama import OllamaLLM as Ollama
 from langchain.prompts import ChatPromptTemplate
 import threading
+
 
 import uuid
 
@@ -34,50 +36,23 @@ class FoodViewSet(ModelViewSet):
         
         if not serializer.validated_data.get("description"):
             food_item = serializer.save(description="", description_generated=False)
+            handle_description_generation(food_item.id)
             
-            threading.Thread(
-                target=self.generate_and_update_description,
-                args=(food_item.id,)
-            ).start()
             return Response({
                 "Status": f"Generating description for {food_item.name} ",
             })
             
-    def generate_and_update_description(self, food_item_id):
-        print("processing")
-        try:
-            food_item =FoodItem.objects.get(id=food_item_id)
-        
-            llm = Ollama(model="mistral", temperature=0.7)
-            prompt_template = """
-                You are a professional food critic and menu description writer. 
-                Create an appealing 2-3 sentence description for this menu item and inspect the images for better analysis:
-                
-                food: {name}
-                tags: {tags}
-            """
-            
-            context = {
-                "name": food_item.name,
-                "image": food_item.image,
-                "tags": " ,".join([tag.tag for tag in food_item.tags.all()]) if food_item.tags.exists() else ""
-            }
-            
-            prompt = ChatPromptTemplate.from_template(prompt_template)
-            chain = prompt | llm
-            description = chain.invoke(context)
-            
-            food_item.description = description
-            food_item.description_generated = True
-            food_item.save()
-            print("Done!")
-        except Exception as e:
-            print("Didn't work" )
-        
+
     
+    @action(detail=False, methods=['get'])
+    def recommended_product_to_user(self, request):
+        past_orders = OrderItem.objects.all()
+        order_data = list(past_orders.values("food_item__name"))
         
-        
-        
+        handle_ai_recommendation(order_data)
+        return Response({"detail": "analysis working now..."})
+    
+
         
         
 
@@ -129,7 +104,7 @@ class RatingViewSet(ModelViewSet):
             llm = Ollama(model="mistral", temperature=0.7)
             
             prompt_template ="""
-                    Provide analysis for this reviews data inspect:
+                    Provide detailed analysis for these food item reviews. highlight whats working, and possible areas to improve in:
                     {formatted_data}
             """
             formatted_data = {
@@ -231,6 +206,7 @@ class OrderViewSet(ModelViewSet):
                 food_item=cart_item.food_item,
                 quantity=cart_item.quantity,
                 price=cart_item.food_item.price,
+                customer=customer
             )
 
         try:

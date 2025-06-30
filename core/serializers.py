@@ -84,7 +84,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'food_item_id', 'food_item_name', 'quantity', 'price', 'is_rated']
+        fields = ['id', 'food_item_id', 'food_item_name', 'quantity', 'price', 'is_rated', 'customer']
 
     def get_is_rated(self, obj):
         request = self.context.get('request')
