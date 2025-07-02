@@ -38,6 +38,9 @@ class FoodItemSerializer(serializers.ModelSerializer):
         model = FoodItem
         fields = ["id", "name", "image", "price", "description", "tags", "average_rating", "rating_count", "description_generated"]
         
+        extra_kwargs = {
+            'image': {'required': True}  # or False if optional
+        }
     def get_average_rating(self, obj):
         average = Rating.objects.filter(order_item__food_item=obj).aggregate(avg_rating=Avg('rating'))['avg_rating']
         return round(average, 1) if average is not None else 0

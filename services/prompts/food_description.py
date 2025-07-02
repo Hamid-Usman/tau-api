@@ -2,7 +2,7 @@
 from langchain_ollama import OllamaLLM as Ollama
 from langchain.prompts import ChatPromptTemplate
 import threading
-from ...core.models import Tag, FoodItem, Rating, ReviewAgent, CartItem, Order, OrderItem
+from core.models import Tag, FoodItem, Rating, ReviewAgent, CartItem, Order, OrderItem
 
 def handle_description_generation(food_item_id):
     threading.Thread(

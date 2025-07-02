@@ -1,4 +1,5 @@
 # from django.shortcuts import render
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Tag, FoodItem, Rating, ReviewAgent, CartItem, Order, OrderItem
 from .serializers import TagSerializer, FoodItemSerializer, RatingSerializer, CartSerializer, OrderSerializer, OrderCreateSerializer, OrderStatusSerializer
 from rest_framework.viewsets import ModelViewSet
@@ -13,8 +14,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import MenuFilter, RatingFilter
 from rest_framework.exceptions import ValidationError
-from ..services.prompts.ai_recommendation import handle_ai_recommendation
-from ..services.prompts.food_description import handle_description_generation
+from services.prompts.ai_recommendation import handle_ai_recommendation
+from services.prompts.food_description import handle_description_generation
 from langchain_ollama import OllamaLLM as Ollama
 from langchain.prompts import ChatPromptTemplate
 import threading
@@ -26,6 +27,7 @@ import uuid
 class FoodViewSet(ModelViewSet):
     queryset = FoodItem.objects.all()
     serializer_class = FoodItemSerializer
+    parser_classes = (MultiPartParser, FormParser,)
     
     filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
     filterset_class = MenuFilter
@@ -40,6 +42,7 @@ class FoodViewSet(ModelViewSet):
             
             return Response({
                 "Status": f"Generating description for {food_item.name} ",
+                "id":food_item.id
             })
             
 
@@ -51,10 +54,6 @@ class FoodViewSet(ModelViewSet):
         
         handle_ai_recommendation(order_data)
         return Response({"detail": "analysis working now..."})
-    
-
-        
-        
 
 class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
