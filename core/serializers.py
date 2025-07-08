@@ -31,12 +31,13 @@ class FoodItemSerializer(serializers.ModelSerializer):
         slug_field='tag',
         queryset=Tag.objects.all()  # Needed for write support
     )
+    total_orders = serializers.IntegerField(read_only=True)
     average_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
     
     class Meta:
         model = FoodItem
-        fields = ["id", "name", "image", "price", "description", "tags", "average_rating", "rating_count", "description_generated"]
+        fields = ["id", "name", "image", "price", "description", "tags", "average_rating", "rating_count", "description_generated", "total_orders"]
         
         extra_kwargs = {
             'image': {'required': True}  # or False if optional

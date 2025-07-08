@@ -44,7 +44,10 @@ class FoodViewSet(ModelViewSet):
                 "Status": f"Generating description for {food_item.name} ",
                 "id":food_item.id
             })
-            
+        
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     
     @action(detail=False, methods=['get'])
@@ -168,6 +171,7 @@ class OrderViewSet(ModelViewSet):
         return OrderSerializer
 
     def create(self, request, *args, **kwargs):
+        
         customer = request.user
         if not customer.is_authenticated:
             return Response({"error": "Authentication required"}, status=401)
@@ -207,6 +211,7 @@ class OrderViewSet(ModelViewSet):
                 price=cart_item.food_item.price,
                 customer=customer
             )
+        
 
         try:
             # Initialize Paystack payment

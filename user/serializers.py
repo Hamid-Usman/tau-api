@@ -18,3 +18,5 @@ class DashboardSerializer(serializers.Serializer):
     orders_completed = serializers.IntegerField()
     top_ratings = serializers.IntegerField()
     total_ratings = serializers.IntegerField()
+    top_orders = serializers.ListField(
+        child=serializers.DictField())

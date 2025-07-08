@@ -1,10 +1,12 @@
 from itertools import count
+from django.db.models import Count, Prefetch
 from django.shortcuts import render
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from .models import User
-from core.models import Order, Rating
+from core.serializers import FoodItemSerializer
+from core.models import FoodItem, Order, OrderItem, Rating
 from .serializers import UserSerializer, DashboardSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -25,11 +27,15 @@ class AdminViewSet(viewsets.GenericViewSet):
         top_rating = Rating.objects.filter(rating = 5).count()
         total_rating = Rating.objects.count()
         
+        top_items = FoodItem.objects.annotate(total_orders=Count('orderitem')).order_by('-total_orders')[:5]
+        
+        
         data = {
             "total_orders": total_orders,
             "orders_completed": orders_completed,
             "top_ratings": top_rating,
             "total_ratings": total_rating,
+            "top_orders": FoodItemSerializer(top_items, many=True).data
         }
         
         serializer = DashboardSerializer(data)
